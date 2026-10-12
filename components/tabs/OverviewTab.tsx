@@ -22,6 +22,7 @@ interface OverviewTabProps {
   onSelectTab: (tab: any) => void;
   onSelectCharacter: (id: string) => void;
   onOpenCreateChar: () => void;
+  onOpenCreateCampaign?: () => void;
   onOpenDiceRoller: () => void;
   onOpenChat: () => void;
   recentRolls: DiceRollResult[];
@@ -33,14 +34,42 @@ export function OverviewTab({
   onSelectTab,
   onSelectCharacter,
   onOpenCreateChar,
+  onOpenCreateCampaign,
   onOpenDiceRoller,
   onOpenChat,
   recentRolls,
 }: OverviewTabProps) {
   if (!activeCampaign) {
     return (
-      <div className="p-8 text-center text-slate-500">
-        Nenhuma campanha ativa. Selecione ou crie uma mesa no topo.
+      <div className="p-8 sm:p-12 text-center bg-[#111116] rounded-2xl border border-slate-800 space-y-4 max-w-xl mx-auto my-8 shadow-xl">
+        <Shield className="w-12 h-12 text-indigo-400 mx-auto" />
+        <h3 className="text-lg font-bold text-white font-serif">Nenhuma Mesa Criada</h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Os dados padrões foram limpos para você iniciar sua jornada do zero! Crie sua primeira campanha personalizada
+          ou cadastre seu sistema de regras para gerenciar fichas e rolar dados.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          {onOpenCreateCampaign && (
+            <button
+              onClick={onOpenCreateCampaign}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors"
+            >
+              + Criar Primeira Mesa
+            </button>
+          )}
+          <button
+            onClick={() => onSelectTab("systems")}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors"
+          >
+            Cadastrar Sistema de Regras
+          </button>
+          <button
+            onClick={() => onSelectTab("extractor")}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-750 text-xs font-semibold rounded-xl cursor-pointer transition-colors"
+          >
+            Extrair Manual com IA
+          </button>
+        </div>
       </div>
     );
   }

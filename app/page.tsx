@@ -17,6 +17,7 @@ import {
 } from "@/types/rpg";
 import { DEFAULT_SYSTEMS, INITIAL_CAMPAIGNS } from "@/lib/initialData";
 import { parseAndRollDice, RpgSoundFX } from "@/lib/rulesEngine";
+import { Sidebar } from "@/components/Sidebar";
 import { Navbar } from "@/components/Navbar";
 import { OverviewTab } from "@/components/tabs/OverviewTab";
 import { SheetsTab } from "@/components/tabs/SheetsTab";
@@ -37,30 +38,42 @@ import { ResourceModal } from "@/components/modals/ResourceModal";
 import { StatusModal } from "@/components/modals/StatusModal";
 
 export default function HomePage() {
-  // 1. Systems State
+  // 1. Systems State - Cleared of default seed data
   const [systems, setSystems] = useState<RpgSystemRules[]>(() => {
-    if (typeof window === "undefined") return DEFAULT_SYSTEMS;
+    if (typeof window === "undefined") return [];
     try {
       const saved = localStorage.getItem("rpg_studio_systems");
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.some((s) => s.id === "t20" || s.id === "dnd5e" || s.id === "coc7e")) {
+          localStorage.removeItem("rpg_studio_systems");
+          return [];
+        }
+        return parsed;
+      }
     } catch {}
-    return DEFAULT_SYSTEMS;
+    return [];
   });
 
-  // 2. Campaigns State
+  // 2. Campaigns State - Cleared of default seed data
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
-    if (typeof window === "undefined") return INITIAL_CAMPAIGNS;
+    if (typeof window === "undefined") return [];
     try {
       const saved = localStorage.getItem("rpg_studio_campaigns");
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.some((c) => c.id === "campanha_arton")) {
+          localStorage.removeItem("rpg_studio_campaigns");
+          return [];
+        }
+        return parsed;
+      }
     } catch {}
-    return INITIAL_CAMPAIGNS;
+    return [];
   });
 
   // Active Campaign
-  const [activeCampaignId, setActiveCampaignId] = useState<string>(() => {
-    return campaigns[0]?.id || "campanha_arton";
-  });
+  const [activeCampaignId, setActiveCampaignId] = useState<string>("");
 
   const activeCampaign =
     campaigns.find((c) => c.id === activeCampaignId) || campaigns[0] || null;
@@ -72,9 +85,7 @@ export default function HomePage() {
     null;
 
   // Active Character
-  const [activeCharacterId, setActiveCharacterId] = useState<string>(() => {
-    return activeCampaign?.characters[0]?.id || "";
-  });
+  const [activeCharacterId, setActiveCharacterId] = useState<string>("");
 
   const activeCharacter =
     activeCampaign?.characters.find((c) => c.id === activeCharacterId) ||
@@ -86,18 +97,13 @@ export default function HomePage() {
     "overview" | "sheets" | "rules" | "systems" | "extractor" | "logs"
   >("overview");
 
+  // Sidebar (Menu Lateral) States
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   // Chat State
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({
-    campanha_arton: [
-      {
-        id: "msg_init",
-        sender: "assistant",
-        text: "Saudações, heróis de Arton! Eu sou o Odysseus IA, seu oráculo e co-mestre de mesa. Conheço todas as regras do sistema Tormenta 20, seus atributos, perícias e os acontecimentos das sessões passadas. Como posso guiar ou tirar dúvidas da mesa hoje?",
-        timestamp: "12:00",
-      },
-    ],
-  });
+  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
 
   const currentMessages = chatMessages[activeCampaign?.id || ""] || [];
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -411,11 +417,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-slate-200 flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* 1. Universal Top Navigation Bar */}
-      <Navbar
+    <div className="min-h-screen bg-[#09090b] text-slate-200 flex flex-row font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+      {/* 1. Menu Lateral (Sidebar Navigation) */}
+      <Sidebar
         campaigns={campaigns}
         activeCampaign={activeCampaign}
+        activeSystem={activeSystem}
         onSelectCampaign={(id) => {
           setActiveCampaignId(id);
           const camp = campaigns.find((c) => c.id === id);
@@ -424,31 +431,49 @@ export default function HomePage() {
           }
         }}
         onOpenCreateCampaign={() => setIsCampaignModalOpen(true)}
-        activeSystem={activeSystem}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
         onOpenDiceRoller={() => setIsDiceModalOpen(true)}
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* 2. Main Content Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-16">
-        {activeTab === "overview" && (
-          <OverviewTab
-            activeCampaign={activeCampaign}
-            activeSystem={activeSystem}
-            onSelectTab={setActiveTab}
-            onSelectCharacter={setActiveCharacterId}
-            onOpenCreateChar={() => {
-              setCharacterToEdit(null);
-              setIsCharModalOpen(true);
-            }}
-            onOpenDiceRoller={() => setIsDiceModalOpen(true)}
-            onOpenChat={() => setIsChatOpen(true)}
-            recentRolls={recentRolls}
-          />
-        )}
+      {/* 2. Main Workspace Layout Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        {/* Workspace Top Header with Breadcrumbs & Action Shortcuts */}
+        <Navbar
+          activeCampaign={activeCampaign}
+          activeSystem={activeSystem}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          onOpenDiceRoller={() => setIsDiceModalOpen(true)}
+          isChatOpen={isChatOpen}
+          onToggleChat={() => setIsChatOpen(!isChatOpen)}
+          activeTab={activeTab}
+          onOpenCreateCampaign={() => setIsCampaignModalOpen(true)}
+        />
+
+        {/* Tab Viewport */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-16">
+          {activeTab === "overview" && (
+            <OverviewTab
+              activeCampaign={activeCampaign}
+              activeSystem={activeSystem}
+              onSelectTab={setActiveTab}
+              onSelectCharacter={setActiveCharacterId}
+              onOpenCreateChar={() => {
+                setCharacterToEdit(null);
+                setIsCharModalOpen(true);
+              }}
+              onOpenCreateCampaign={() => setIsCampaignModalOpen(true)}
+              onOpenDiceRoller={() => setIsDiceModalOpen(true)}
+              onOpenChat={() => setIsChatOpen(true)}
+              recentRolls={recentRolls}
+            />
+          )}
 
         {activeTab === "sheets" && (
           <SheetsTab
@@ -485,6 +510,7 @@ export default function HomePage() {
             onOpenRawJson={() => setIsRawJsonOpen(true)}
             onOpenDiffModal={() => setIsDiffModalOpen(true)}
             onUpdateSystem={handleUpdateSystem}
+            onSelectTab={setActiveTab}
           />
         )}
 
@@ -553,6 +579,7 @@ export default function HomePage() {
           />
         )}
       </main>
+      </div>
 
       {/* 3. Odysseus AI Assistant Drawer */}
       <OdysseusChat

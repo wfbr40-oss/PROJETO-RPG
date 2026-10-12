@@ -26,6 +26,7 @@ interface RulesTabProps {
   onOpenRawJson: () => void;
   onOpenDiffModal: () => void;
   onUpdateSystem: (updated: RpgSystemRules) => void;
+  onSelectTab?: (tab: any) => void;
 }
 
 export function RulesTab({
@@ -35,14 +36,38 @@ export function RulesTab({
   onOpenRawJson,
   onOpenDiffModal,
   onUpdateSystem,
+  onSelectTab,
 }: RulesTabProps) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<"all" | "attributes" | "classes" | "abilities" | "spells" | "combat" | "statuses" | "custom">("all");
 
   if (!activeSystem) {
     return (
-      <div className="p-12 text-center text-slate-500 bg-[#111116] rounded-2xl border border-slate-800">
-        Nenhum sistema selecionado.
+      <div className="p-8 sm:p-12 text-center text-slate-400 bg-[#111116] rounded-2xl border border-slate-800 space-y-4 max-w-xl mx-auto my-8 shadow-xl">
+        <BookOpen className="w-12 h-12 text-indigo-400 mx-auto" />
+        <h3 className="text-lg font-bold text-white font-serif">Nenhum Sistema Vinculado</h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Os dados padrões foram limpos. Cadastre seu próprio sistema de RPG com atributos, classes e magias personalizadas,
+          ou use o Extrator Inteligente com IA para digitalizar as regras de um livro ou notas.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          {onSelectTab && (
+            <>
+              <button
+                onClick={() => onSelectTab("systems")}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors"
+              >
+                Criar Novo Sistema de Regras
+              </button>
+              <button
+                onClick={() => onSelectTab("extractor")}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-750 text-xs font-semibold rounded-xl cursor-pointer transition-colors"
+              >
+                Extrair Manual com IA
+              </button>
+            </>
+          )}
+        </div>
       </div>
     );
   }
