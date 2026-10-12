@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '@/lib/authContext';
 
 export const metadata: Metadata = {
   title: 'Projeto RPG Studio',
@@ -22,8 +23,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className="bg-[#09090b] text-slate-200 antialiased selection:bg-indigo-500/30 selection:text-indigo-200 min-h-screen" suppressHydrationWarning>
-        {children}
+      <body
+        className="bg-[#08090d] text-slate-200 antialiased selection:bg-indigo-500/30 selection:text-indigo-200 min-h-screen"
+        suppressHydrationWarning
+      >
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
