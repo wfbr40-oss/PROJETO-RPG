@@ -1,0 +1,6 @@
+{
+  "name": "Projeto RPG Studio",
+  "description": "Plataforma inteligente e moderna para gerenciar sistemas de RPG de mesa, fichas automatizadas e regras personalizadas com assistente IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
